@@ -1,0 +1,4 @@
+name = "SequentialLOB"
+uuid = "e6344446-1757-11ea-03c6-8946dcd8e19e"
+authors = ["Michael Laptop <michael.j.g.za@gmail.com>"]
+version = "0.1.0"
