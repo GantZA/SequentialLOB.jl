@@ -47,4 +47,4 @@ examples/
 # End of https://www.gitignore.io/api/julia
 
 # log files
-.log
+*.log
