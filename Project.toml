@@ -4,6 +4,7 @@ authors = ["Michael Laptop <michael.j.g.za@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 IOLogging = "9ee9e592-2d2d-57f4-9c4b-95048a1bc2c4"
