@@ -108,54 +108,49 @@ function intra_time_period_simulate(slob, φ, p)
     return φ_next, P⁺, P⁻, P
 end
 
-
-function dtrw_solver(rdpp::ReactionDiffusionPricePaths)
-    time_steps = floor(Int, rdpp.T / rdpp.Δt)
-
-    φ = ones(Float64, rdpp.M + 1, time_steps + 1)
+function dtrw_solver(slob::SLOB)
+    time_steps = get_time_steps(slob.T, slob.Δt)
+    φ = ones(Float64, slob.M + 1, time_steps + 1)
 
     p = ones(Float64, time_steps + 1)
-    mid_prices = ones(Float64, rdpp.T + 1)
+    mid_prices = ones(Float64, slob.T + 1)
 
-    p[1] = rdpp.p₀
-    mid_prices[1] = rdpp.p₀
+    p[1] = slob.p₀
+    mid_prices[1] = slob.p₀
 
-    P⁺s = ones(Float64, time_steps)
-    P⁻s = ones(Float64, time_steps)
-    Ps = ones(Float64, time_steps)
+    P⁺s = fill(1/3, time_steps)
+    P⁻s = fill(1/3, time_steps)
+    Ps = fill(1/3, time_steps)
 
     t = 1
-    calendar_time_index = 1
-    φ[:, t] = initial_conditions_numerical(rdpp, p[t], 0.0)
+    φ[:, t] = initial_conditions_numerical(slob, p[t], 0.0)
 
     while t <= time_steps
-        τ, τ_periods = get_sub_period_time(rdpp, t, time_steps)
+        τ, τ_periods = get_sub_period_time(slob, t, time_steps)
 
         for τₖ = 1:τ_periods
             t += 1
-            φ[:, t], P⁺s[t-1], P⁻s[t-1], Ps[t-1]  = intra_time_period_simulate(rdpp,
-                φ[:, t-1], p[calendar_time_index])
-            p[t] = extract_mid_price(rdpp, φ[:, t])
-            @info "Intra-period simulation. tick price = R$(p[t]) @t=$t"
-            if t*rdpp.Δt > calendar_time_index
-                calendar_time_index += 1
-                mid_prices[calendar_time_index] = p[t]
-                @info "Mid price R$(mid_prices[calendar_time_index]) sampled @n=$calendar_time_index"
+            φ[:, t], P⁺s[t-1], P⁻s[t-1], Ps[t-1]  = intra_time_period_simulate(slob,
+                φ[:, t-1], p[t-1])
+            try
+                p[t] = extract_mid_price(slob, φ[:, t])
+            catch e
+                println("Bounds Error at t=$t")
+                return φ, p, mid_prices, P⁺s, P⁻s, Ps
             end
+
+            @info "Intra-period simulation. tick price = R$(p[t]) @t=$t"
         end
         if t > time_steps
+            mid_prices = sample_mid_price_path(slob, p)
             return φ, p, mid_prices, P⁺s, P⁻s, Ps
         end
         t += 1
-        φ[:, t] = initial_conditions_numerical(rdpp, p[t-1])
-        p[t] = extract_mid_price(rdpp, φ[:, t])
+        φ[:, t] = initial_conditions_numerical(slob, p[t-1])
+        p[t] = extract_mid_price(slob, φ[:, t])
         @info "LOB Density recalculated. tick price = R$(p[t]) @t=$t"
-        rdpp.x = get_adaptive_price_grid(rdpp, p[t])
-        if (t)*rdpp.Δt > calendar_time_index
-            calendar_time_index += 1
-            mid_prices[calendar_time_index] = p[t]
-            @info "Mid price R$(mid_prices[calendar_time_index]) sampled @n=$calendar_time_index"
-        end
     end
+
+    mid_prices = sample_mid_price_path(slob, p)
     return φ, p, mid_prices, P⁺s, P⁻s, Ps
 end
