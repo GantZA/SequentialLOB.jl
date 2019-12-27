@@ -1,11 +1,4 @@
-# Generate a time series of stock prices by repeatedly solving the SPDE
-# from Mastromatteo et al. (2014) to model the latent order book.
-# using the previously generated mid price as the new initial mid price and
-# boundary mid point during each iteration to generate a sequence of T prices,
-# where T is the number of measured prices stored in the loaded
-# ObjectiveFunction object.
-
-mutable struct ReactionDiffusionPricePaths
+mutable struct SLOB
     num_paths::Int64
     T::Int64
     p₀::Float64
