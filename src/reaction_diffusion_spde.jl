@@ -1,47 +1,33 @@
-function initial_conditions_numerical(rdpp::ReactionDiffusionPricePaths, pₙ, V₀)
-    A = Tridiagonal(
-        (V₀/(2.0*rdpp.Δx) + rdpp.D/(rdpp.Δx^2)) * ones(Float64, rdpp.M),
-        ((-2.0*rdpp.D)/(rdpp.Δx^2) - rdpp.nu) * ones(Float64, rdpp.M+1),
-        (-V₀/(2.0*rdpp.Δx) + rdpp.D/(rdpp.Δx^2)) * ones(Float64, rdpp.M))
+function initial_conditions_numerical(slob::SLOB, pₙ, V₀)
+    ud = (-V₀/(2.0*slob.Δx) + slob.D/(slob.Δx^2)) * ones(Float64, slob.M)
+    md = ((-2.0*slob.D)/(slob.Δx^2) - slob.nu) * ones(Float64, slob.M+1)
+    ld = (V₀/(2.0*slob.Δx) + slob.D/(slob.Δx^2)) * ones(Float64, slob.M)
+    A = Tridiagonal(ud, md, ld)
 
-    A[1,1] = (-rdpp.D)/(rdpp.Δx^2) - rdpp.nu + V₀/(2.0*rdpp.Δx)
-    A[end, end] = (-rdpp.D)/(rdpp.Δx^2) - rdpp.nu - V₀/(2.0*rdpp.Δx)
+    A[1,2] = 2*slob.D/(slob.Δx^2)
+    A[end, end-1] = 2*slob.D/(slob.Δx^2)
 
-    B = .-[rdpp.source_term(xᵢ, pₙ) for xᵢ in rdpp.x]
+    B = .-[slob.source_term(xᵢ, pₙ) for xᵢ in slob.x]
     φ = A \ B
     return φ
 end
 
-function initial_conditions_numerical(rdpp::ReactionDiffusionPricePaths, pₙ)
+function initial_conditions_numerical(slob::SLOB, pₙ)
     ϵ = rand(Normal(0.0, 1.0))
-    V₀ =sign(ϵ) * min(abs(rdpp.σ * ϵ), rdpp.Δx / rdpp.Δt)
-    return initial_conditions_numerical(rdpp, pₙ, V₀)
+    V₀ =sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
+    return initial_conditions_numerical(slob, pₙ, V₀)
 end
 
-
-
-function sample_mid_price_path(rdpp, Δt, price_path)
-    mid_prices = zeros(Float64, rdpp.T + 1)
-    mid_prices[1] = price_path[1]
-    for t = 1:rdpp.T
-        close_ind = floor(Int, t / Δt)
-        mid_prices[t+1] = price_path[close_ind]
-    end
-    return mid_prices
-end
-
-
-function extract_mid_price(rdpp, lob_density)
+function extract_mid_price(slob, lob_density)
     mid_price_ind = 2
     while (lob_density[mid_price_ind] > 0) | (lob_density[mid_price_ind+1]>lob_density[mid_price_ind])
         mid_price_ind += 1
     end
-
     y1 = lob_density[mid_price_ind-1]
     y2 = lob_density[mid_price_ind]
-    x1 = rdpp.x[mid_price_ind-1]
+    x1 = slob.x[mid_price_ind-1]
 
-    mid_price = round(-(y1 * rdpp.Δx)/(y2 - y1) + x1, digits = 2)
+    mid_price = round(-(y1 * slob.Δx)/(y2 - y1) + x1, digits = 2)
     return mid_price
 end
 
