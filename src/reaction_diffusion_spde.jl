@@ -2,7 +2,7 @@ function initial_conditions_numerical(slob::SLOB, pₙ, V₀)
     ud = (-V₀/(2.0*slob.Δx) + slob.D/(slob.Δx^2)) * ones(Float64, slob.M)
     md = ((-2.0*slob.D)/(slob.Δx^2) - slob.nu) * ones(Float64, slob.M+1)
     ld = (V₀/(2.0*slob.Δx) + slob.D/(slob.Δx^2)) * ones(Float64, slob.M)
-    A = Tridiagonal(ud, md, ld)
+    A = Tridiagonal(ld, md, ud)
 
     A[1,2] = 2*slob.D/(slob.Δx^2)
     A[end, end-1] = 2*slob.D/(slob.Δx^2)
