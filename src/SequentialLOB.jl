@@ -1,4 +1,4 @@
-module SLOB
+module SequentialLOB
 
 using LinearAlgebra
 using Statistics
@@ -18,10 +18,9 @@ include("objective_surface.jl")
 
 __version__ = "Sequential LOB"
 
-export ReactionDiffusionPricePaths,
+export SLOB,
        SourceTerm,
        parse_commandline,
        ObjectiveSurface,
-       initial_conditions_steady_state,
-       sample_mid_price_path
+       initial_conditions_steady_state
 end # module
