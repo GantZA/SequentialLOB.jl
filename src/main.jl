@@ -1,9 +1,9 @@
-using LatentOrderBookModel
+using SequentialLOB
 
 function main(output = "stdout")
     parsed_args = parse_commandline()
-    rdpp = ReactionDiffusionPricePaths(
-        parsed_args["num_paths"],
+    slob_model = SLOB(
+        1,
         parsed_args["T"],
         parsed_args["p₀"],
         parsed_args["M"],
@@ -20,10 +20,10 @@ function main(output = "stdout")
         raw_price_paths,
         sample_price_paths,
         P⁺s,
-        P⁻s = rdpp(parsed_args["SEED"])
+        P⁻s = slob_model(parsed_args["SEED"])
         print(sample_price_paths[:, 1])
     else
-        return rdpp(parsed_args["SEED"])
+        return slob_model(parsed_args["SEED"])
     end
 
 
