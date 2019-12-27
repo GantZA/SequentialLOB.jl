@@ -65,36 +65,36 @@ function calculate_self_jump_probability(Z)
 end
 
 
-function calculate_jump_probabilities(rdpp, Vₜ)
-    Z = (rdpp.β * Vₜ * rdpp.Δx) / (2* rdpp.D)
+function calculate_jump_probabilities(slob, Vₜ)
+    Z = (slob.β * Vₜ * slob.Δx) / (2* slob.D)
     return calculate_right_jump_probability(Z),
         calculate_left_jump_probability(Z), calculate_self_jump_probability(Z)
 end
 
 
-function get_sub_period_time(rdpp, t, time_steps)
-    τ = rand(Exponential(rdpp.α))
+function get_sub_period_time(slob, t, time_steps)
+    τ = rand(Exponential(slob.α))
     remaining_time = time_steps - t + 1
-    τ_periods = min(floor(Int, τ/rdpp.Δt), remaining_time)
+    τ_periods = min(floor(Int, τ/slob.Δt), remaining_time)
     @info "Waiting time=$(round(τ, digits=4)) which equates to $τ_periods time periods"
     return τ, τ_periods
 end
 
 
-function get_adaptive_price_grid(rdpp, p)
-    x₀ = p - 0.5*rdpp.L
-    xₘ = p + 0.5*rdpp.L
+function get_adaptive_price_grid(slob, p)
+    x₀ = p - 0.5*slob.L
+    xₘ = p + 0.5*slob.L
     @assert x₀ >= 0
-    @info "Price grid changed from $(rdpp.x[1]):$(rdpp.x[end]) to $x₀:$xₘ"
-    return collect(Float64, range(x₀, xₘ, length=rdpp.M+1))
+    @info "Price grid changed from $(slob.x[1]):$(slob.x[end]) to $x₀:$xₘ"
+    return collect(Float64, range(x₀, xₘ, length=slob.M+1))
 end
 
 
-function intra_time_period_simulate(rdpp, φ, p)
+function intra_time_period_simulate(slob, φ, p)
     ϵ = rand(Normal(0.0, 1.0))
-    Vₜ = sign(ϵ) * min(abs(rdpp.σ * ϵ), rdpp.Δx / rdpp.Δt)
+    Vₜ = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
 
-    P⁺, P⁻, P = calculate_jump_probabilities(rdpp, Vₜ)
+    P⁺, P⁻, P = calculate_jump_probabilities(slob, Vₜ)
 
     φ₋₁ = φ[1]
     φₘ₊₁ = φ[end]
