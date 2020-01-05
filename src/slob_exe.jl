@@ -9,7 +9,6 @@ Base.@ccallable function julia_main(ARGS::Vector{String})::Cint
         parsed_args["T"],
         parsed_args["p₀"],
         parsed_args["M"],
-        parsed_args["β"],
         parsed_args["L"],
         parsed_args["D"],
         parsed_args["σ"],
@@ -19,12 +18,12 @@ Base.@ccallable function julia_main(ARGS::Vector{String})::Cint
     )
 
     lob_densities,
-    price_paths,
-    mid_price_bars,
+    raw_price_paths,
+    mid_price_paths,
     P⁺s,
     P⁻s,
     Ps = slob_model(parsed_args["SEED"])
-    print(mid_price_bars[:, 1])
+    print(mid_price_paths[:, 1])
     return 0
 end
 

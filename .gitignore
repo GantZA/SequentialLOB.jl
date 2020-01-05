@@ -48,3 +48,6 @@ examples/
 
 # log files
 *.log
+
+# JLD files
+*.jld

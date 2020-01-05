@@ -23,9 +23,6 @@ function parse_commandline()
             help = "Number of price points"
             arg_type = Int
             default = 100
-        "β"
-            arg_type = Float64
-            default = 1.0
         "L"
             arg_type = Float64
             default = 50.0
@@ -37,10 +34,10 @@ function parse_commandline()
             default = 1.0
         "nu"
             arg_type = Float64
-            default = 0.0
+            default = 0.1
         "α"
             arg_type = Float64
-            default = 1.0
+            default = 20.0
         "λ"
             arg_type = Float64
             default = 1.0
