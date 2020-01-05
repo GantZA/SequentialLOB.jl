@@ -56,15 +56,6 @@ function get_sub_period_time(slob, t, time_steps)
 end
 
 
-function get_adaptive_price_grid(slob, p)
-    x₀ = p - 0.5*slob.L
-    xₘ = p + 0.5*slob.L
-    @assert x₀ >= 0
-    @info "Price grid changed from $(slob.x[1]):$(slob.x[end]) to $x₀:$xₘ"
-    return collect(Float64, range(x₀, xₘ, length=slob.M+1))
-end
-
-
 function intra_time_period_simulate(slob, φ, p)
     ϵ = rand(Normal(0.0, 1.0))
     Vₜ = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
