@@ -32,43 +32,18 @@ function extract_mid_price(slob, lob_density)
 end
 
 
-function calculate_right_jump_probability(Z)
-    if Z > 10
-        return 1.0
-    elseif Z < -10
-        return 0.0
-    else
-        return (exp(Z))/(exp(-Z) + exp(Z) + 1)
-    end
-end
-
-
-function calculate_left_jump_probability(Z)
-    if Z > 10
-        return 0.0
-    elseif Z < -10
-        return 1.0
-    else
-        return (exp(-Z))/(exp(-Z) + exp(Z) + 1)
-    end
-end
-
-
-function calculate_self_jump_probability(Z)
-    if Z > 10
-        return 0.0
-    elseif Z < -10
-        return 0.0
-    else
-        return 1/(exp(-Z) + exp(Z) + 1)
-    end
+function calculate_left_jump_probability(Z, nu_t)
+    return (1.0 - nu_t)/(exp(2*Z) + 1.0)
 end
 
 
 function calculate_jump_probabilities(slob, Vₜ)
-    Z = (slob.β * Vₜ * slob.Δx) / (2* slob.D)
-    return calculate_right_jump_probability(Z),
-        calculate_left_jump_probability(Z), calculate_self_jump_probability(Z)
+    Z = (Vₜ * slob.Δx) / (2* slob.D)
+    nu_Δt = slob.nu * slob.Δt
+    p⁻ = calculate_left_jump_probability(Z, nu_Δt)
+    p⁺ = 1.0 - p⁻ - nu_Δt
+    return p⁺, p⁻
+
 end
 
 
@@ -100,10 +75,10 @@ function intra_time_period_simulate(slob, φ, p)
     φₘ₊₁ = φ[end]
     φ_next = zeros(Float64, size(φ,1))
 
-    φ_next[1] = P⁺ * φ₋₁ + P * φ[1] + P⁻ * φ[2] - slob.nu * φ[1] + slob.source_term(slob.x[1], p)
-    φ_next[end] = P⁻ * φₘ₊₁ +  P * φ[end] + P⁺ * φ[end-1] - slob.nu * φ[end] + slob.source_term(slob.x[end], p)
-    φ_next[2:end-1] = P⁺ * φ[1:end-2] + P * φ[2:end-1] + P⁻ * φ[3:end] - slob.nu * φ[2:end-1] +
-        [slob.source_term(xᵢ, p) for xᵢ in slob.x[2:end-1]]
+    φ_next[1] = P⁺ * φ₋₁ + P⁻ * φ[2] + slob.Δt * slob.source_term(slob.x[1], p)
+    φ_next[end] = P⁻ * φₘ₊₁ + P⁺ * φ[end-1] + slob.Δt * slob.source_term(slob.x[end], p)
+    φ_next[2:end-1] = P⁺ * φ[1:end-2] + P⁻ * φ[3:end] +
+        [slob.Δt * slob.source_term(xᵢ, p) for xᵢ in slob.x[2:end-1]]
 
     return φ_next, P⁺, P⁻
 end
