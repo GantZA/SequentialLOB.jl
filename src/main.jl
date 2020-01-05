@@ -7,7 +7,6 @@ function main(output = "stdout")
         parsed_args["T"],
         parsed_args["p₀"],
         parsed_args["M"],
-        parsed_args["β"],
         parsed_args["L"],
         parsed_args["D"],
         parsed_args["σ"],
@@ -18,10 +17,10 @@ function main(output = "stdout")
     if output == "stdout"
         lob_densities,
         raw_price_paths,
-        sample_price_paths,
+        mid_price_paths,
         P⁺s,
         P⁻s = slob_model(parsed_args["SEED"])
-        print(sample_price_paths[:, 1])
+        print(mid_price_paths[:, 1])
     else
         return slob_model(parsed_args["SEED"])
     end

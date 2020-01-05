@@ -6,10 +6,10 @@ include("../src/main.jl")
 @testset "All Tests" begin
     slob_model = SLOB()
     @testset "Reproducibility" begin
-        slob_model_1 = SLOB(1, 200, 238.745, 500, 2.0, 100,
-            2.0, 0.01, 0.01, SourceTerm(1.0, 0.5))
-        slob_model_2 = SLOB(1, 200, 238.745, 500, 2.0, 100,
-            2.0, 0.01, 0.01, SourceTerm(1.0, 0.5))
+        slob_model_1 = SLOB(1, 200, 238.745, 500, 100.0, 2.0,
+            1.0, 0.1, 20.0, SourceTerm(1.0, 0.5))
+        slob_model_2 = SLOB(1, 200, 238.745, 500, 100.0, 2.0,
+            1.0, 0.1, 20.0, SourceTerm(1.0, 0.5))
         @test all(slob_model_1(45) .== slob_model_2(45))
 
         @test all(slob_model_1(51) .== slob_model_2(51))
@@ -29,13 +29,12 @@ include("../src/main.jl")
             "p₀" => 100.0,
             "λ" => 1.0,
             "SEED" => 1,
-            "β" => 1.0,
-            "nu" => 0.0,
+            "nu" => 0.1,
             "σ" => 1.0,
             "D" => 4.0,
             "M" => 100,
             "L" => 50.0,
-            "α" => )
+            "α" => 20.0)
     end
 
     @testset "Main Default Arguments" begin

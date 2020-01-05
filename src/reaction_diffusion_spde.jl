@@ -94,7 +94,7 @@ function intra_time_period_simulate(slob, φ, p)
     ϵ = rand(Normal(0.0, 1.0))
     Vₜ = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
 
-    P⁺, P⁻, P = calculate_jump_probabilities(slob, Vₜ)
+    P⁺, P⁻ = calculate_jump_probabilities(slob, Vₜ)
 
     φ₋₁ = φ[1]
     φₘ₊₁ = φ[end]
@@ -105,7 +105,7 @@ function intra_time_period_simulate(slob, φ, p)
     φ_next[2:end-1] = P⁺ * φ[1:end-2] + P * φ[2:end-1] + P⁻ * φ[3:end] - slob.nu * φ[2:end-1] +
         [slob.source_term(xᵢ, p) for xᵢ in slob.x[2:end-1]]
 
-    return φ_next, P⁺, P⁻, P
+    return φ_next, P⁺, P⁻
 end
 
 function dtrw_solver(slob::SLOB)
@@ -118,10 +118,8 @@ function dtrw_solver(slob::SLOB)
     p[1] = slob.p₀
     mid_prices[1] = slob.p₀
 
-    P⁺s = fill(1/3, time_steps)
-    P⁻s = fill(1/3, time_steps)
-    Ps = fill(1/3, time_steps)
-
+    P⁺s = fill(1/2-slob.nu*slob.Δt/2, time_steps)
+    P⁻s = fill(1/2-slob.nu*slob.Δt/2, time_steps)
     t = 1
     φ[:, t] = initial_conditions_numerical(slob, p[t], 0.0)
 
@@ -130,20 +128,20 @@ function dtrw_solver(slob::SLOB)
 
         for τₖ = 1:τ_periods
             t += 1
-            φ[:, t], P⁺s[t-1], P⁻s[t-1], Ps[t-1]  = intra_time_period_simulate(slob,
+            φ[:, t], P⁺s[t-1], P⁻s[t-1]  = intra_time_period_simulate(slob,
                 φ[:, t-1], p[t-1])
             try
                 p[t] = extract_mid_price(slob, φ[:, t])
             catch e
                 println("Bounds Error at t=$t")
-                return φ, p, mid_prices, P⁺s, P⁻s, Ps
+                return φ, p, mid_prices, P⁺s, P⁻s
             end
 
             @info "Intra-period simulation. tick price = R$(p[t]) @t=$t"
         end
         if t > time_steps
             mid_prices = sample_mid_price_path(slob, p)
-            return φ, p, mid_prices, P⁺s, P⁻s, Ps
+            return φ, p, mid_prices, P⁺s, P⁻s
         end
         t += 1
         φ[:, t] = initial_conditions_numerical(slob, p[t-1])
@@ -152,5 +150,5 @@ function dtrw_solver(slob::SLOB)
     end
 
     mid_prices = sample_mid_price_path(slob, p)
-    return φ, p, mid_prices, P⁺s, P⁻s, Ps
+    return φ, p, mid_prices, P⁺s, P⁻s
 end
