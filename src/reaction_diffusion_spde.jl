@@ -59,7 +59,6 @@ function get_sub_period_time(slob, t, time_steps)
     τ = rand(Exponential(slob.α))
     remaining_time = time_steps - t + 1
     τ_periods = min(floor(Int, τ/slob.Δt), remaining_time)
-    @info "Waiting time=$(round(τ, digits=4)) which equates to $τ_periods time periods"
     return τ, τ_periods
 end
 
