@@ -17,12 +17,7 @@ Base.@ccallable function julia_main(ARGS::Vector{String})::Cint
         SourceTerm(parsed_args["λ"], parsed_args["μ"]),
     )
 
-    lob_densities,
-    raw_price_paths,
-    mid_price_paths,
-    P⁺s,
-    P⁻s,
-    Ps = slob_model(parsed_args["SEED"])
+    mid_price_paths = slob_model(parsed_args["SEED"])
     print(mid_price_paths[:, 1])
     return 0
 end

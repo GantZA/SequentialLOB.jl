@@ -32,18 +32,26 @@ function extract_mid_price(slob, lob_density)
 end
 
 
-function calculate_left_jump_probability(Z, nu_t)
-    return (1.0 - nu_t)/(exp(2*Z) + 1.0)
+function calculate_left_jump_probability(Z)
+    return (exp(-Z))/(exp(Z) + exp(-Z) + 1.0)
 end
+
+function calculate_right_jump_probability(Z)
+    return (exp(Z))/(exp(Z) + exp(-Z) + 1.0)
+end
+
+function calculate_self_jump_probability(Z)
+    return (1.0)/(exp(Z) + exp(-Z) + 1.0)
+end
+
 
 
 function calculate_jump_probabilities(slob, Vₜ)
     Z = (Vₜ * slob.Δx) / (2* slob.D)
-    nu_Δt = slob.nu * slob.Δt
-    p⁻ = calculate_left_jump_probability(Z, nu_Δt)
-    p⁺ = 1.0 - p⁻ - nu_Δt
-    return p⁺, p⁻
-
+    p⁻ = calculate_left_jump_probability(Z)
+    p⁺ = calculate_right_jump_probability(Z)
+    p = calculate_self_jump_probability(Z)
+    return p⁺, p⁻, p
 end
 
 
@@ -60,21 +68,57 @@ function intra_time_period_simulate(slob, φ, p)
     ϵ = rand(Normal(0.0, 1.0))
     Vₜ = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
 
-    P⁺, P⁻ = calculate_jump_probabilities(slob, Vₜ)
+    P⁺, P⁻, P = calculate_jump_probabilities(slob, Vₜ)
 
     φ₋₁ = φ[1]
     φₘ₊₁ = φ[end]
     φ_next = zeros(Float64, size(φ,1))
 
-    φ_next[1] = P⁺ * φ₋₁ + P⁻ * φ[2] + slob.Δt * slob.source_term(slob.x[1], p)
-    φ_next[end] = P⁻ * φₘ₊₁ + P⁺ * φ[end-1] + slob.Δt * slob.source_term(slob.x[end], p)
-    φ_next[2:end-1] = P⁺ * φ[1:end-2] + P⁻ * φ[3:end] +
+    φ_next[1] = P⁺ * φ₋₁ + P⁻ * φ[2] + P * φ[1] -
+        slob.nu * slob.Δt * φ[1] + slob.Δt * slob.source_term(slob.x[1], p)
+
+    φ_next[end] = P⁻ * φₘ₊₁ + P⁺ * φ[end-1] + P * φ[end] -
+        slob.nu * slob.Δt * φ[end] + slob.Δt * slob.source_term(slob.x[end], p)
+
+    φ_next[2:end-1] = P⁺ * φ[1:end-2] + P⁻ * φ[3:end] + P * φ[2:end-1] -
+        slob.nu * slob.Δt * φ[2:end-1] +
         [slob.Δt * slob.source_term(xᵢ, p) for xᵢ in slob.x[2:end-1]]
 
-    return φ_next, P⁺, P⁻
+    return φ_next, P⁺, P⁻, P
 end
 
+
 function dtrw_solver(slob::SLOB)
+    time_steps = get_time_steps(slob.T, slob.Δt)
+    p = ones(Float64, time_steps + 1)
+    p[1] = slob.p₀
+
+    t = 1
+    φ = initial_conditions_numerical(slob, p[t], 0.0)
+
+    while t <= time_steps
+        τ, τ_periods = get_sub_period_time(slob, t, time_steps)
+
+        for τₖ = 1:τ_periods
+            t += 1
+            φ, _, _, _  = intra_time_period_simulate(slob, φ, p[t-1])
+            p[t] = extract_mid_price(slob, φ)
+
+        end
+        if t > time_steps
+            mid_prices = sample_mid_price_path(slob, p)
+            return mid_prices
+        end
+        t += 1
+        φ = initial_conditions_numerical(slob, p[t-1])
+        p[t] = extract_mid_price(slob, φ)
+    end
+    mid_prices = sample_mid_price_path(slob, p)
+    return mid_prices
+end
+
+
+function dtrw_solver(debug::Bool, slob::SLOB)
     time_steps = get_time_steps(slob.T, slob.Δt)
     φ = ones(Float64, slob.M + 1, time_steps + 1)
 
@@ -84,8 +128,9 @@ function dtrw_solver(slob::SLOB)
     p[1] = slob.p₀
     mid_prices[1] = slob.p₀
 
-    P⁺s = fill(1/2-slob.nu*slob.Δt/2, time_steps)
-    P⁻s = fill(1/2-slob.nu*slob.Δt/2, time_steps)
+    P⁺s = fill(1/2, time_steps)
+    P⁻s = fill(1/2, time_steps)
+    Ps = fill(1/2, time_steps)
     t = 1
     φ[:, t] = initial_conditions_numerical(slob, p[t], 0.0)
 
@@ -94,27 +139,36 @@ function dtrw_solver(slob::SLOB)
 
         for τₖ = 1:τ_periods
             t += 1
-            φ[:, t], P⁺s[t-1], P⁻s[t-1]  = intra_time_period_simulate(slob,
+            φ[:, t], P⁺s[t-1], P⁻s[t-1], Ps[t-1]  = intra_time_period_simulate(slob,
                 φ[:, t-1], p[t-1])
             try
                 p[t] = extract_mid_price(slob, φ[:, t])
             catch e
                 println("Bounds Error at t=$t")
-                return φ, p, mid_prices, P⁺s, P⁻s
+                mid_prices = sample_mid_price_path(slob, p)
+                return φ, p, mid_prices, P⁺s, P⁻s, Ps
             end
 
             @info "Intra-period simulation. tick price = R$(p[t]) @t=$t"
         end
         if t > time_steps
             mid_prices = sample_mid_price_path(slob, p)
-            return φ, p, mid_prices, P⁺s, P⁻s
+            return φ, p, mid_prices, P⁺s, P⁻s, Ps
         end
         t += 1
         φ[:, t] = initial_conditions_numerical(slob, p[t-1])
-        p[t] = extract_mid_price(slob, φ[:, t])
+        try
+            p[t] = extract_mid_price(slob, φ[:, t])
+        catch e
+            println("Initial Conditions Bounds Error at t=$t")
+            mid_prices = sample_mid_price_path(slob, p)
+            return φ, p, mid_prices, P⁺s, P⁻s, Ps
+        end
+
+
         @info "LOB Density recalculated. tick price = R$(p[t]) @t=$t"
     end
 
     mid_prices = sample_mid_price_path(slob, p)
-    return φ, p, mid_prices, P⁺s, P⁻s
+    return φ, p, mid_prices, P⁺s, P⁻s, Ps
 end
