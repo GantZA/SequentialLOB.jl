@@ -19,7 +19,8 @@ function main(output = "stdout")
         raw_price_paths,
         mid_price_paths,
         P⁺s,
-        P⁻s = slob_model(parsed_args["SEED"])
+        P⁻s,
+        Ps = slob_model(parsed_args["SEED"])
         print(mid_price_paths[:, 1])
     else
         return slob_model(parsed_args["SEED"])
