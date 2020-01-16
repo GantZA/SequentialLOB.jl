@@ -87,7 +87,38 @@ function intra_time_period_simulate(slob, φ, p)
     return φ_next, P⁺, P⁻, P
 end
 
+
 function dtrw_solver(slob::SLOB)
+    time_steps = get_time_steps(slob.T, slob.Δt)
+    p = ones(Float64, time_steps + 1)
+    p[1] = slob.p₀
+
+    t = 1
+    φ = initial_conditions_numerical(slob, p[t], 0.0)
+
+    while t <= time_steps
+        τ, τ_periods = get_sub_period_time(slob, t, time_steps)
+
+        for τₖ = 1:τ_periods
+            t += 1
+            φ, _, _, _  = intra_time_period_simulate(slob, φ, p[t-1])
+            p[t] = extract_mid_price(slob, φ)
+
+        end
+        if t > time_steps
+            mid_prices = sample_mid_price_path(slob, p)
+            return mid_prices
+        end
+        t += 1
+        φ = initial_conditions_numerical(slob, p[t-1])
+        p[t] = extract_mid_price(slob, φ)
+    end
+    mid_prices = sample_mid_price_path(slob, p)
+    return mid_prices
+end
+
+
+function dtrw_solver(debug::Bool, slob::SLOB)
     time_steps = get_time_steps(slob.T, slob.Δt)
     φ = ones(Float64, slob.M + 1, time_steps + 1)
 

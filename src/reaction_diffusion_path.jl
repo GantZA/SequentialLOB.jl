@@ -47,6 +47,25 @@ function (slob::SLOB)(seed::Int=-1)
         else
             seeds = Int.(rand(MersenneTwister(seed), UInt32, slob.num_paths))
     end
+
+    time_steps = get_time_steps(slob.T, slob.Δt)
+
+    mid_price_paths = ones(Float64, slob.T + 1, slob.num_paths)
+    for path in 1:slob.num_paths
+        Random.seed!(seeds[path])
+        mid_price_paths[:, path] = dtrw_solver(slob)
+    end
+
+    return mid_price_paths
+end
+
+
+function (slob::SLOB)(debug::Bool, seed::Int=-1)
+    if seed == -1
+            seeds = Int.(rand(MersenneTwister(), UInt32, slob.num_paths))
+        else
+            seeds = Int.(rand(MersenneTwister(seed), UInt32, slob.num_paths))
+    end
     time_steps = get_time_steps(slob.T, slob.Δt)
 
     raw_price_paths = ones(Float64, time_steps + 1, slob.num_paths)
@@ -62,7 +81,7 @@ function (slob::SLOB)(seed::Int=-1)
         @info "path $path with seed $(seeds[path])"
         lob_densities[:, :, path], raw_price_paths[:, path],
             sample_price_paths[:, path], P⁺s[:, path],
-            P⁻s[:, path], Ps[:, path] = dtrw_solver(slob)
+            P⁻s[:, path], Ps[:, path] = dtrw_solver(debug, slob)
     end
 
     return lob_densities, raw_price_paths, sample_price_paths, P⁺s, P⁻s, Ps

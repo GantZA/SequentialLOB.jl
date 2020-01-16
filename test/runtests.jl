@@ -5,7 +5,7 @@ include("../src/main.jl")
 
 @testset "All Tests" begin
     slob_model = SLOB()
-    @testset "Reproducibility" begin
+    @testset "Reproducibility Non-Debug" begin
         slob_model_1 = SLOB(1, 200, 238.745, 500, 100.0, 2.0,
             1.0, 0.1, 20.0, SourceTerm(1.0, 0.5))
         slob_model_2 = SLOB(1, 200, 238.745, 500, 100.0, 2.0,
@@ -17,8 +17,20 @@ include("../src/main.jl")
         @test all(slob_model_1(4565756745) .== slob_model_2(4565756745))
     end;
 
+    @testset "Reproducibility Debug" begin
+        slob_model_1 = SLOB(1, 200, 238.745, 500, 100.0, 2.0,
+            1.0, 0.1, 20.0, SourceTerm(1.0, 0.5))
+        slob_model_2 = SLOB(1, 200, 238.745, 500, 100.0, 2.0,
+            1.0, 0.1, 20.0, SourceTerm(1.0, 0.5))
+        @test all(slob_model_1(true, 45) .== slob_model_2(true, 45))
+
+        @test all(slob_model_1(true, 51) .== slob_model_2(true, 51))
+
+        @test all(slob_model_1(true, 4565756745) .== slob_model_2(true, 4565756745))
+    end;
+
     @testset "Default Values" begin
-        lob_densities, price_paths, mid_price_bars, P⁺s, P⁻s = slob_model()
+        lob_densities, price_paths, mid_price_bars, P⁺s, P⁻s = slob_model(true)
         @test size(mid_price_bars) == (101,1)
     end;
 

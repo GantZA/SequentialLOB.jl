@@ -15,12 +15,7 @@ function main(output = "stdout")
         SourceTerm(parsed_args["λ"], parsed_args["μ"]),
     )
     if output == "stdout"
-        lob_densities,
-        raw_price_paths,
-        mid_price_paths,
-        P⁺s,
-        P⁻s,
-        Ps = slob_model(parsed_args["SEED"])
+        mid_price_paths = slob_model(parsed_args["SEED"])
         print(mid_price_paths[:, 1])
     else
         return slob_model(parsed_args["SEED"])
