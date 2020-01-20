@@ -14,7 +14,7 @@ function (os::ObjectiveSurface)(seed, parallel=false)
     iterations = os.surface_points^2
 
     seeds = Int.(rand(MersenneTwister(seed), UInt32, iterations))
-    if para==true
+    if parallel==true
         os_values = SharedArray{Float64,1}(iterations*os.replications)
         @sync @distributed for i in 1:iterations
             os.params[os.param1_name] = os.param1_values[i]
