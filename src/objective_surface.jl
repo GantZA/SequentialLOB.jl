@@ -6,34 +6,35 @@ mutable struct ObjectiveSurface
     surface_points::Int64
     replications::Int64
     params::Dict{String, Any}
+    weight_matrix::BlockBootstrapWeightMatrix
 end
 
 
-function (os::ObjectiveSurface)(seed, para=false)
+function (os::ObjectiveSurface)(seed, parallel=false)
     iterations = os.surface_points^2
 
     seeds = Int.(rand(MersenneTwister(seed), UInt32, iterations))
     if para==true
-        sample_price_paths = SharedArray{Float64,2}((os.params["T"]+1, iterations*os.replications))
+        os_values = SharedArray{Float64,1}(iterations*os.replications)
         @sync @distributed for i in 1:iterations
             os.params[os.param1_name] = os.param1_values[i]
             os.params[os.param2_name] = os.param2_values[i]
-            rdpp = ReactionDiffusionPricePaths(os.params)
-            index_start = (i-1) * os.replications + 1
-            index_end = i * os.replications
-            _, _, sample_price_paths[:, index_start:index_end], _, _ = rdpp(seeds[i])
+            slob = SLOB(os.params)
+            mid_price_paths = slob(seeds[i])
+            os_values[i] = weighted_moment_distance(os.weight_matrix,
+                mid_price_paths)
         end
-        return sample_price_paths
+        return os_values
     else
-        sample_price_paths = Array{Float64,2}(undef, os.params["T"]+1, iterations*os.replications)
+        os_values = Array{Float64,1}(undef, iterations*os.replications)
         for i in 1:iterations
             os.params[os.param1_name] = os.param1_values[i]
             os.params[os.param2_name] = os.param2_values[i]
-            rdpp = ReactionDiffusionPricePaths(os.params)
-            index_start = (i-1) * os.replications + 1
-            index_end = i * os.replications
-            _, _, sample_price_paths[:, index_start:index_end], _, _ = rdpp(seeds[i])
+            slob = SLOB(os.params)
+            mid_price_paths = slob(seeds[i])
+            os_values[i] = weighted_moment_distance(os.weight_matrix,
+                mid_price_paths)
         end
-        return sample_price_paths
+        return os_values
     end
 end

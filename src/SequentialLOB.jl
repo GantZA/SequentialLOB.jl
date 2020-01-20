@@ -9,6 +9,7 @@ using Distributed
 using SpecialFunctions
 using Logging
 using IOLogging
+using TSSM
 
 include("source_function.jl")
 include("reaction_diffusion_path.jl")
