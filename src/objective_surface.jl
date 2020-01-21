@@ -10,6 +10,19 @@ mutable struct ObjectiveSurface
 end
 
 
+function objective_function(os::ObjectiveSurface, seed)
+    try
+        slob = SLOB(os.params)
+        mid_price_paths = slob(seed)
+        objective_value = weighted_moment_distance(os.weight_matrix,
+            mid_price_paths)
+        return objective_value
+    catch e
+        return NaN
+    end
+end
+
+
 function (os::ObjectiveSurface)(seed, parallel=false)
     iterations = os.surface_points^2
 
@@ -19,10 +32,7 @@ function (os::ObjectiveSurface)(seed, parallel=false)
         @sync @distributed for i in 1:iterations
             os.params[os.param1_name] = os.param1_values[i]
             os.params[os.param2_name] = os.param2_values[i]
-            slob = SLOB(os.params)
-            mid_price_paths = slob(seeds[i])
-            os_values[i] = weighted_moment_distance(os.weight_matrix,
-                mid_price_paths)
+            os_values[i] = objective_function(os, seeds[i])
         end
         return os_values
     else
@@ -30,10 +40,7 @@ function (os::ObjectiveSurface)(seed, parallel=false)
         for i in 1:iterations
             os.params[os.param1_name] = os.param1_values[i]
             os.params[os.param2_name] = os.param2_values[i]
-            slob = SLOB(os.params)
-            mid_price_paths = slob(seeds[i])
-            os_values[i] = weighted_moment_distance(os.weight_matrix,
-                mid_price_paths)
+            os_values[i] = objective_function(os, seeds[i])
         end
         return os_values
     end
