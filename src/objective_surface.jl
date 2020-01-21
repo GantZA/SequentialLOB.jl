@@ -10,10 +10,11 @@ mutable struct ObjectiveSurface
 end
 
 
-function objective_function(os::ObjectiveSurface, seed)
+function objective_function(parameter_dict::Dict, os::ObjectiveSurface, seed, ind)
     try
-        slob = SLOB(os.params)
-        mid_price_paths = slob(seed)
+        parameter_dict[os.param1_name] = os.param1_values[ind]
+        parameter_dict[os.param2_name] = os.param2_values[ind]
+        mid_price_paths = SLOB(parameter_dict)(seed)
         objective_value = weighted_moment_distance(os.weight_matrix,
             mid_price_paths)
         return objective_value
@@ -27,20 +28,17 @@ function (os::ObjectiveSurface)(seed, parallel=false)
     iterations = os.surface_points^2
 
     seeds = Int.(rand(MersenneTwister(seed), UInt32, iterations))
+    parameter_vector = fill(os.params, iterations)
     if parallel==true
-        os_values = SharedArray{Float64,1}(iterations*os.replications)
+        os_values = SharedArray{Float64,1}(iterations)
         @sync @distributed for i in 1:iterations
-            os.params[os.param1_name] = os.param1_values[i]
-            os.params[os.param2_name] = os.param2_values[i]
-            os_values[i] = objective_function(os, seeds[i])
+            os_values[i] = objective_function(parameter_vector[i], os, seeds[i], i)
         end
-        return os_values
+        return Array(os_values)
     else
-        os_values = Array{Float64,1}(undef, iterations*os.replications)
+        os_values = Array{Float64,1}(undef, iterations)
         for i in 1:iterations
-            os.params[os.param1_name] = os.param1_values[i]
-            os.params[os.param2_name] = os.param2_values[i]
-            os_values[i] = objective_function(os, seeds[i])
+            os_values[i] = objective_function(parameter_vector[i], os, seeds[i], i)
         end
         return os_values
     end
