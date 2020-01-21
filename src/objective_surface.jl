@@ -14,9 +14,9 @@ function objective_function(parameter_dict::Dict, os::ObjectiveSurface, seed, in
     try
         parameter_dict[os.param1_name] = os.param1_values[ind]
         parameter_dict[os.param2_name] = os.param2_values[ind]
-        mid_price_paths = SLOB(parameter_dict)(seed)
+        log_mid_price_paths = log.(SLOB(parameter_dict)(seed))
         objective_value = weighted_moment_distance(os.weight_matrix,
-            mid_price_paths)
+            log_mid_price_paths)
         return objective_value
     catch e
         return NaN
