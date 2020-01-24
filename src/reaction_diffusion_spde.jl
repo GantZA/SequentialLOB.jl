@@ -127,9 +127,9 @@ function dtrw_solver(debug::Bool, slob::SLOB)
     p[1] = slob.p₀
     mid_prices[1] = slob.p₀
 
-    P⁺s = fill(1/2, time_steps)
-    P⁻s = fill(1/2, time_steps)
-    Ps = fill(1/2, time_steps)
+    P⁺s = fill(1/3, time_steps)
+    P⁻s = fill(1/3, time_steps)
+    Ps = fill(1/3, time_steps)
     t = 1
     φ[:, t] = initial_conditions_numerical(slob, p[t], 0.0)
 
