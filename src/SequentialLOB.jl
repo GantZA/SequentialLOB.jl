@@ -1,3 +1,6 @@
+__precompile()__
+
+
 module SequentialLOB
 
 using LinearAlgebra
@@ -22,6 +25,6 @@ __version__ = "Sequential LOB"
 export SLOB,
        SourceTerm,
        parse_commandline,
-       ObjectiveSurface,
-       initial_conditions_steady_state
+       ObjectiveSurface
+
 end # module
