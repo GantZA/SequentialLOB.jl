@@ -51,3 +51,5 @@ examples/
 
 # JLD files
 *.jld
+
+*.ftpconfig
