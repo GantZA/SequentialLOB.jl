@@ -1,3 +1,5 @@
+abstract type WeightMatrix end
+
 mutable struct ObjectiveSurface
     param1_name::String
     param1_values::Array{Float64,1}
@@ -6,7 +8,7 @@ mutable struct ObjectiveSurface
     surface_points::Int64
     replications::Int64
     params::Dict{String, Any}
-    weight_matrix::BlockBootstrapWeightMatrix
+    weight_matrix::WeightMatrix
 end
 
 
