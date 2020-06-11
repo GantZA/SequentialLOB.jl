@@ -59,7 +59,6 @@ function get_sub_period_time(slob, t, time_steps)
     τ = rand(Exponential(slob.α))
     remaining_time = time_steps - t + 1
     τ_periods = min(floor(Int, τ/slob.Δt), remaining_time)
-    @info "Waiting time=$(round(τ, digits=4)) which equates to $τ_periods time periods"
     return τ, τ_periods
 end
 
@@ -128,9 +127,9 @@ function dtrw_solver(debug::Bool, slob::SLOB)
     p[1] = slob.p₀
     mid_prices[1] = slob.p₀
 
-    P⁺s = fill(1/2, time_steps)
-    P⁻s = fill(1/2, time_steps)
-    Ps = fill(1/2, time_steps)
+    P⁺s = fill(1/3, time_steps)
+    P⁻s = fill(1/3, time_steps)
+    Ps = fill(1/3, time_steps)
     t = 1
     φ[:, t] = initial_conditions_numerical(slob, p[t], 0.0)
 

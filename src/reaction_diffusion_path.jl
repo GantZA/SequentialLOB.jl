@@ -16,8 +16,7 @@ end
 function SLOB(num_paths::Int64, T::Int64, p₀::Float64,
     M::Int64, L::Real, D::Float64, σ::Float64, nu::Float64,
     α::Float64, source_term::SourceTerm)
-    logger = FileLogger(Dict(Logging.Info => "info.log", Logging.Error => "error.log"), append=false)
-    global oldglobal = global_logger(logger)
+
     x₀ = p₀ - 0.5*L
     xₘ = p₀ + 0.5*L
     @assert x₀ >= 0
@@ -61,6 +60,8 @@ end
 
 
 function (slob::SLOB)(debug::Bool, seed::Int=-1)
+    logger = FileLogger(Dict(Logging.Info => "info.log", Logging.Error => "error.log"), append=false)
+    global oldglobal = global_logger(logger)
     if seed == -1
             seeds = Int.(rand(MersenneTwister(), UInt32, slob.num_paths))
         else

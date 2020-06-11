@@ -3,7 +3,7 @@ using ArgParse
 function parse_commandline()
     s = ArgParseSettings()
 
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "SEED"
             help = "Seed for randomness"
             arg_type = Int

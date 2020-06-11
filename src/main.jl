@@ -24,6 +24,6 @@ function main(output = "stdout")
 
 end
 
-if "" != PROGRAM_FILE && realpath(@__FILE__) == realpath(PROGRAM_FILE)
+if "" != PROGRAM_FILE && occursin(PROGRAM_FILE, @__FILE__)
     main()
 end

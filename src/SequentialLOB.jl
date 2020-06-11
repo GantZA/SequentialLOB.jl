@@ -1,3 +1,6 @@
+__precompile__()
+
+
 module SequentialLOB
 
 using LinearAlgebra
@@ -9,6 +12,7 @@ using Distributed
 using SpecialFunctions
 using Logging
 using IOLogging
+using TSSM
 
 include("source_function.jl")
 include("reaction_diffusion_path.jl")
@@ -21,6 +25,6 @@ __version__ = "Sequential LOB"
 export SLOB,
        SourceTerm,
        parse_commandline,
-       ObjectiveSurface,
-       initial_conditions_steady_state
+       ObjectiveSurface
+
 end # module
