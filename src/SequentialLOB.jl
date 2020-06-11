@@ -1,4 +1,4 @@
-__precompile()__
+__precompile__()
 
 
 module SequentialLOB
