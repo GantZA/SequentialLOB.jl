@@ -51,3 +51,21 @@ examples/
 
 # JLD files
 *.jld
+
+*.ftpconfig
+
+# presentation folder
+presentation/
+
+# archive folder
+archive/
+
+# PDFs
+*.pdf
+
+# CSVs
+*.csv
+
+# SVGs
+*.svg
+
