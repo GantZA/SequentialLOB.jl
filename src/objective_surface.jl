@@ -1,5 +1,3 @@
-abstract type WeightMatrix end
-
 mutable struct ObjectiveSurface
     param1_name::String
     param1_values::Array{Float64,1}
@@ -8,7 +6,7 @@ mutable struct ObjectiveSurface
     surface_points::Int64
     replications::Int64
     params::Dict{String, Any}
-    weight_matrix::WeightMatrix
+    weight_matrix::Any
 end
 
 
@@ -16,9 +14,11 @@ function objective_function(parameter_dict::Dict, os::ObjectiveSurface, seed, in
     try
         parameter_dict[os.param1_name] = os.param1_values[ind]
         parameter_dict[os.param2_name] = os.param2_values[ind]
-        log_mid_price_paths = log.(SLOB(parameter_dict)(seed))
+        log_price_paths = log.(SLOB(parameter_dict)(seed))
+        log_price_paths = vcat(log_price_paths[1:1,:], log_price_paths)
+        log_returns = diff(log_price_paths, dims=1)
         objective_value = weighted_moment_distance(os.weight_matrix,
-            log_mid_price_paths)
+            log_returns)
         return objective_value
     catch e
         return NaN
@@ -39,7 +39,7 @@ function (os::ObjectiveSurface)(seed, parallel=false)
         return Array(os_values)
     else
         os_values = Array{Float64,1}(undef, iterations)
-        for i in 1:iterations
+        @showprogress 1 "Iteration: " for i in 1:iterations
             os_values[i] = objective_function(parameter_vector[i], os, seeds[i], i)
         end
         return os_values
