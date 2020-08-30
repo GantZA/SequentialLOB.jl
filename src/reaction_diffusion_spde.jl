@@ -56,6 +56,9 @@ end
 
 
 function get_sub_period_time(slob, t, time_steps)
+    if slob.α <= 0.0
+        return 0.0, time_steps - t + 1
+    end
     τ = rand(Exponential(slob.α))
     remaining_time = time_steps - t + 1
     τ_periods = min(floor(Int, τ/slob.Δt), remaining_time)
@@ -109,7 +112,9 @@ function dtrw_solver(slob::SLOB)
             return mid_prices
         end
         t += 1
-        φ = initial_conditions_numerical(slob, p[t-1])
+        if slob.α > 0.0
+            φ = initial_conditions_numerical(slob, p[t-1])
+        end
         p[t] = extract_mid_price(slob, φ)
     end
     mid_prices = sample_mid_price_path(slob, p)
@@ -155,7 +160,10 @@ function dtrw_solver(debug::Bool, slob::SLOB)
             return φ, p, mid_prices, P⁺s, P⁻s, Ps
         end
         t += 1
-        φ[:, t] = initial_conditions_numerical(slob, p[t-1])
+        if slob.α > 0.0
+            φ[:, t] = initial_conditions_numerical(slob, p[t-1])
+        end
+        
         try
             p[t] = extract_mid_price(slob, φ[:, t])
         catch e
