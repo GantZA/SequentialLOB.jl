@@ -47,7 +47,7 @@ end
 
 
 function calculate_jump_probabilities(slob, Vₜ)
-    Z = (Vₜ * slob.Δx) / (2* slob.D)
+    Z = (3*Vₜ * slob.Δx) / (4* slob.D)
     p⁻ = calculate_left_jump_probability(Z)
     p⁺ = calculate_right_jump_probability(Z)
     p = calculate_self_jump_probability(Z)
