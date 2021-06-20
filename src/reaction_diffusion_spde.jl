@@ -1,4 +1,4 @@
-function initial_conditions_numerical(slob::SLOB, pₙ, V₀)
+function initial_conditions_numerical(slob::SLOB, p_0, V₀)
     ud = (-V₀/(2.0*slob.Δx) + slob.D/(slob.Δx^2)) * ones(Float64, slob.M)
     md = ((-2.0*slob.D)/(slob.Δx^2) - slob.nu) * ones(Float64, slob.M+1)
     ld = (V₀/(2.0*slob.Δx) + slob.D/(slob.Δx^2)) * ones(Float64, slob.M)
@@ -7,15 +7,15 @@ function initial_conditions_numerical(slob::SLOB, pₙ, V₀)
     A[1,2] = 2*slob.D/(slob.Δx^2)
     A[end, end-1] = 2*slob.D/(slob.Δx^2)
 
-    B = .-[slob.source_term(xᵢ, pₙ) for xᵢ in slob.x]
+    B = .-[slob.source_term(xᵢ, p_0) for xᵢ in slob.x]
     φ = A \ B
     return φ
 end
 
-function initial_conditions_numerical(slob::SLOB, pₙ)
+function initial_conditions_numerical(slob::SLOB, p_0)
     ϵ = rand(Normal(0.0, 1.0))
-    V₀ =sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
-    return initial_conditions_numerical(slob, pₙ, V₀)
+    V₀ = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
+    return initial_conditions_numerical(slob, p_0, V₀)
 end
 
 function extract_mid_price(slob, lob_density)
@@ -27,7 +27,7 @@ function extract_mid_price(slob, lob_density)
     y2 = lob_density[mid_price_ind]
     x1 = slob.x[mid_price_ind-1]
 
-    mid_price = round(-(y1 * slob.Δx)/(y2 - y1) + x1, digits = 2)
+    mid_price = (-y1 * slob.Δx)/(y2 - y1) + x1
     return mid_price
 end
 
@@ -46,8 +46,9 @@ end
 
 
 
-function calculate_jump_probabilities(slob, Vₜ)
-    Z = (3*Vₜ * slob.Δx) / (4* slob.D)
+function calculate_jump_probabilities(slob, V_t)
+    Z = (3/4) * (V_t * slob.Δx) / (slob.D)
+    # Z = (V_t * slob.Δx) / (slob.D)
     p⁻ = calculate_left_jump_probability(Z)
     p⁺ = calculate_right_jump_probability(Z)
     p = calculate_self_jump_probability(Z)
@@ -68,18 +69,18 @@ end
 
 function intra_time_period_simulate(slob, φ, p)
     ϵ = rand(Normal(0.0, 1.0))
-    Vₜ = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
+    V_t = sign(ϵ) * min(abs(slob.σ * ϵ), slob.Δx / slob.Δt)
 
-    P⁺, P⁻, P = calculate_jump_probabilities(slob, Vₜ)
+    P⁺, P⁻, P = calculate_jump_probabilities(slob, V_t)
 
     φ₋₁ = φ[1]
-    φₘ₊₁ = φ[end]
+    φ₊₁ = φ[end]
     φ_next = zeros(Float64, size(φ,1))
 
     φ_next[1] = P⁺ * φ₋₁ + P⁻ * φ[2] + P * φ[1] -
         slob.nu * slob.Δt * φ[1] + slob.Δt * slob.source_term(slob.x[1], p)
 
-    φ_next[end] = P⁻ * φₘ₊₁ + P⁺ * φ[end-1] + P * φ[end] -
+    φ_next[end] = P⁻ * φ₊₁ + P⁺ * φ[end-1] + P * φ[end] -
         slob.nu * slob.Δt * φ[end] + slob.Δt * slob.source_term(slob.x[end], p)
 
     φ_next[2:end-1] = P⁺ * φ[1:end-2] + P⁻ * φ[3:end] + P * φ[2:end-1] -

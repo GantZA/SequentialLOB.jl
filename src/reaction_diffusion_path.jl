@@ -18,9 +18,9 @@ function SLOB(num_paths::Int64, T::Int64, p₀::Float64,
     α::Float64, source_term::SourceTerm)
 
     x₀ = p₀ - 0.5*L
-    xₘ = p₀ + 0.5*L
+    x_m = p₀ + 0.5*L
     @assert x₀ >= 0
-    x = collect(Float64, range(x₀, stop=xₘ, length=M+1))
+    x = collect(Float64, range(x₀, stop=x_m, length=M+1))
     Δx = L/M
     Δt = (Δx^2) / (2.0*D)
     return SLOB(num_paths, T, p₀, M, L, D, σ, nu, α, source_term, x, Δx, Δt)

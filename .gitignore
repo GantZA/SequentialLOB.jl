@@ -69,3 +69,4 @@ archive/
 # SVGs
 *.svg
 
+.vscode
